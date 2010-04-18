@@ -1,0 +1,4 @@
+; $Id
+name = Sodom
+description = Protects against comment form spam.
+core = 6.x
