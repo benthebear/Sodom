@@ -20,7 +20,7 @@ function sodom_form_alter(&$form, &$form_state, $form_id){
 function sodom_comment(&$a1, $op){
 	global $user;
 	if($op== "validate" and $a1['sodom'] == 0 and $user->uid == 0 ){	
-		watchdog("sodom", t("Dog or Spambot Attack"), array(), WATCHDOG_INFO);
-		form_set_error("sodom", "Du bist Hund oder Spambot?!");
+		watchdog("sodom", t("Dog or Spambot Attack")."! <br/> ".t("Name").":".$a1["name"]." <br/> ".t("Comment").": ".$a1["comment"], array(), WATCHDOG_INFO);
+		form_set_error("sodom", "Dein Kommentar wurde NICHT gespeichert, weil Du noch einen Haken setzen musst, oder bist Du Hund oder Spambot?!");
 	}
 }
