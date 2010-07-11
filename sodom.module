@@ -6,21 +6,100 @@
 *
 */
 
+function sodom_menu() {
+  $items = array();
+
+  // Modules Settings
+  $items['admin/settings/sodom'] = array(
+    'title' => 'Sodom Settings',
+    'description' => 'Several Settings for your Sodom Spam Protection',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sodom_admin_settings'),
+    'access arguments' => array('administer sodom'),
+    'menu_name' => 'Sodom',
+  );
+  return $items;
+}
+
+function sodom_admin_settings(){
+  $form["sodom"] = array();
+  
+  $options = array("checkbox" => t("Checkbox"), "textfield" => t("Textfield"));
+  
+  $form["sodom"]["sodom_protection_type"] = array ('#type' => 'select',
+      '#title' => t('Protection Type'),
+      '#default_value' => variable_get('sodom_protection_type', "checkbox"),
+      '#size' => 1,
+      '#description' => t('Which type of Protection do you need?'),
+      '#options' => $options,
+  );  
+  // Checkbox
+  $form["sodom"]["checkbox"] = array('#type' => 'fieldset', '#title' => t('Checkbox Settings'),);
+  $form["sodom"]["checkbox"]["sodom_checkbox_title"] = array ('#type' => 'textfield',
+      '#title' => t('Title of the Checkbox'),
+      '#default_value' => variable_get('sodom_checkbox_title', t("I am neither a Dog nor a Spambot.")),
+      '#size' => 50,
+      '#description' => t('The Title of your Sodom-Spam-Protection-Checkbox'),
+  );
+  $form["sodom"]["checkbox"]["sodom_checkbox_error"] = array ('#type' => 'textfield',
+      '#title' => t('Error-Message of the Checkbox'),
+      '#default_value' => variable_get('sodom_checkbox_error', t("Your Comment hasn't been saved, because you have to make a check, or are you a Dog or Spambot?!")),
+      '#size' => 50,
+      '#description' => t('The Error-Message of your Sodom-Spam-Protection-Checkbox'),
+  );
+  // Textfield
+  $form["sodom"]["textfield"] = array('#type' => 'fieldset', '#title' => t('Textfield Settings'),);
+  $form["sodom"]["textfield"]["sodom_textfield_question"] = array ('#type' => 'textfield',
+      '#title' => t('The Question, you want to ask'),
+      '#default_value' => variable_get('sodom_textfield_question', t("Are you a Dog or a Spambot? Answer with 'Yes' or 'No'")),
+      '#size' => 50,
+      '#description' => t('The Question of your Sodom-Spam-Protection-Textfield'),
+  );
+  $form["sodom"]["textfield"]["sodom_textfield_answer"] = array ('#type' => 'textfield',
+      '#title' => t('The Correct Answer to your Question.'),
+      '#default_value' => variable_get('sodom_textfield_answer', t("No")),
+      '#size' => 50,
+      '#description' => t('The Answer of your Sodom-Spam-Protection-Textfield'),
+  );
+  $form["sodom"]["textfield"]["sodom_textfield_error"] = array ('#type' => 'textfield',
+      '#title' => t('Error-Message of the Textfield'),
+      '#default_value' => variable_get('sodom_textfield_error', t("Your Comment has NOT been saved, because you have to answer the question correctly, or are you a Dog or Spambot?!")),
+      '#size' => 50,
+      '#description' => t('The Error-Message of your Sodom-Spam-Protection-Textfield'),
+  );
+  
+  return system_settings_form($form);
+}
+
 function sodom_form_alter(&$form, &$form_state, $form_id){
 	//dprint_r($form_state);
 	global $user;
 	if($form_id == "comment_form" and $user->uid==0){
-		$form['sodom'] = array(
-			"#type" => "checkbox",
-			"#title" => "Bin weder Hund noch Spambot.",
-			);
+	  if(variable_get('sodom_protection_type', "checkbox")=="checkbox"){
+		  $form['sodom'] = array(
+			  "#type" => "checkbox",
+			  "#title" => variable_get('sodom_checkbox_title', t("I am neither a Dog nor a Spambot.")),
+			  );
+		}elseif(variable_get('sodom_protection_type', "checkbox")=="textfield"){
+		  $form['sodom'] = array(
+			  "#type" => "textfield",
+			  "#title" => variable_get('sodom_textfield_question', t("Are you a Dog or a Spambot? Answer with 'Yes' or 'No'")),
+			  );
+		}
 	}
 }
 
 function sodom_comment(&$a1, $op){
 	global $user;
-	if($op== "validate" and $a1['sodom'] == 0 and $user->uid == 0 ){	
-		watchdog("sodom", t("Dog or Spambot Attack")."! <br/> ".t("Name").":".$a1["name"]." <br/> ".t("Comment").": ".$a1["comment"], array(), WATCHDOG_INFO);
-		form_set_error("sodom", "Dein Kommentar wurde NICHT gespeichert, weil Du noch einen Haken setzen musst, oder bist Du Hund oder Spambot?!");
-	}
+	if(variable_get('sodom_protection_type', "checkbox")=="checkbox"){
+	  if($op== "validate" and $a1['sodom'] == 0 and $user->uid == 0 ){	
+		  watchdog("sodom", t("Dog or Spambot Attack")."! <br/> ".t("Name").":".$a1["name"]." <br/> ".t("Comment").": ".$a1["comment"], array(), WATCHDOG_INFO);
+		  form_set_error("sodom", variable_get('sodom_checkbox_error', "Your Comment has NOT been saved, because you have to make a check, or are you a Dog or Spambot?!"));
+	  }
+  }elseif(variable_get('sodom_protection_type', "checkbox")=="textfield"){
+    if($op== "validate" and $a1['sodom'] != variable_get('sodom_textfield_answer', t("No")) and $user->uid == 0 ){	
+      watchdog("sodom", t("Dog or Spambot Attack")."! <br/> ".t("Name").":".$a1["name"]." <br/> ".t("Comment").": ".$a1["comment"], array(), WATCHDOG_INFO);
+		  form_set_error("sodom", variable_get('sodom_textfield_error', t("Your Comment has NOT been saved, because you have to answer the question correctly, or are you a Dog or Spambot?!")));
+    }
+  }
 }
