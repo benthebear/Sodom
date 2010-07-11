@@ -11,7 +11,7 @@ function sodom_menu() {
 
   // Modules Settings
   $items['admin/settings/sodom'] = array(
-    'title' => 'Sodom Settings',
+    'title' => 'Sodom Spam Protection',
     'description' => 'Several Settings for your Sodom Spam Protection',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sodom_admin_settings'),
